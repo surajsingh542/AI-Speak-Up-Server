@@ -33,17 +33,28 @@ router.post('/register', registerValidation, async (req, res) => {
 
 		// Check if user already exists
 		const existingUser = await User.findOne({ email });
-		if (existingUser) {
+		if (existingUser && existingUser?.isVerified) {
 			return res.status(400).json({ message: 'Email already registered' });
 		}
 
-		// Create new user
-		const user = new User({
-			email,
-			password,
-			name,
-			phone
-		});
+		let user = {};
+		if (existingUser) {
+			// Update existing user
+			user = existingUser;
+			user.name = name; // Update name
+			user.phone = phone; // Update phone
+			if (password) {
+				user.password = password; // Update password
+			}
+		} else {
+			// Create new user
+			user = new User({
+				email,
+				password,
+				name,
+				phone
+			});
+		}
 
 		// Generate verification token
 		const verificationToken = jwt.sign(
