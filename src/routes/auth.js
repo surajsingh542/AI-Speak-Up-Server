@@ -222,6 +222,7 @@ router.get('/verify/:token', async (req, res) => {
 		});
 
 		if (!user) {
+		return res.status(400).json({message: 'Invalid or expired verification token'});
 			return res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:3000'}/login?verification=failed&message=Invalid or expired verification token`);
 		}
 
@@ -229,11 +230,14 @@ router.get('/verify/:token', async (req, res) => {
 		user.verificationToken = undefined;
 		await user.save();
 
+		return res.status(200).json({message: 'Email verified successfully'});
 		res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:3000'}/login?verification=success&message=Email verified successfully`);
 	} catch (error) {
 		if (error.name === 'TokenExpiredError') {
+		return res.status(400).json({message: 'Verification token has expired', error: error.message});
 			return res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:3000'}/login?verification=failed&message=Verification token has expired`);
 		}
+		return res.status(500).json({message: 'Verification failed', error: error.message});
 		res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:3000'}/login?verification=failed&message=Verification failed`);
 	}
 });
